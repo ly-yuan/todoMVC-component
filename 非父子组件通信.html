@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Vue-非父子组件通信</title>
+</head>
+
+<body>
+  <div id="app">
+    <h1>{{ message }}</h1>
+    <sub1></sub1>
+    <sub2></sub2>
+  </div>
+  <script src="node_modules/vue/dist/vue.js"></script>
+  <script>
+    // 0. 创建一个空的 Vue 实例
+    const bus = new Vue()
+
+    const app = new Vue({
+      el: '#app',
+      data: {
+        message: 'Hello Vue.js!'
+      },
+      methods: {},
+      components: {
+        sub1: {
+          template: `<div>
+                      sub1 component
+                      <h4>{{ count }}</h4>
+                      <button @click="changeSub2Count">让 sub2 组件的 count += 自己的 count</button>
+                    </div>`,
+          data () {
+            return {
+              count: 0
+            }
+          },
+          methods: {
+            changeSub2Count () {
+              // 让 sub2 的 count += 自己的count
+              // 对外发布一个事件
+              bus.$emit('count', this.count)
+            }
+          }
+        },
+        sub2: {
+          // 当这个组件被创建出来之后会自动调用这个函数
+          // 而且只调用一次
+          // 我们可以在这里通过 this 来访问数据成员
+          created () {
+            console.log(this) // sub2 组件实例
+            // console.log('sub2 被创建出来了', this.count)
+            bus.$on('count', val => {
+              // console.log('监听到 count 事件了', val)
+              // console.log(this.count) // 在自定义事件处理函数中的 this 是 bus
+              // 在这里修改 sub2 组件的 count += val
+              this.count += val
+            })
+          },
+          template: `<div>
+                      sub2 component
+                      <h4>{{ count }}</h4>
+                    </div>`,
+          data () {
+            return {
+              count: 100
+            }
+          }
+        }
+      }
+    })
+
+    // bind inserted update ...
+    // 其实我们的实例|组件也有一堆的生命周期函数
+
+    // bus.$on('count', function (val) {
+    //   console.log('监听到 count 事件了', val)
+    //   // 在这里修改 sub2 组件的 count += val
+    // })
+  </script>
+</body>
+
+</html>
